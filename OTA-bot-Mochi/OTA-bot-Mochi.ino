@@ -17,6 +17,7 @@
 #include <Arduino_GFX_Library.h>
 #include <ChronosESP32.h>
 #include "pin_config.h"
+#include "src/hardware_fx.h"
 #include "src/eyes/eyes_api.h"
 #include "src/eyes/eyes_faces.h"
 #include "src/eyes/imu_orientation.h"
@@ -89,6 +90,7 @@ constexpr uint32_t FRAME_INTERVAL_MS = 33;
  */
 void notification_callback(Notification notification) {
 	ui_notification(notification);
+    hardware_fx::trigger(FxEvent::Notification, millis());
 }
 
 /** @brief Update the call overlay. @param caller Caller ID. @param active Call state. */
@@ -296,7 +298,8 @@ void handle_touch(uint32_t now) {
 		screens_invalidate();
 		return;
 	}
-	if (pet && current_screen == UiPage::Eyes && !screens_calling()) { eyes_faces_pet(now, pet_x, pet_y); }
+	if (pet && current_screen == UiPage::Eyes && !screens_calling()) { eyes_faces_pet(now, pet_x, pet_y);
+        hardware_fx::trigger(FxEvent::Pet, now); }
 	if (tap && current_screen == UiPage::Settings && !screens_calling()) {
 		MenuAction action = settings_menu_tap(x, y);
 		if (action == MenuAction::Update) { ota_screen_begin(gfx, now); return; }
@@ -306,8 +309,10 @@ void handle_touch(uint32_t now) {
 		else if (action == MenuAction::Changed) { screens_invalidate(); }
 	} else if (tap && !screens_calling()) {
 		if (current_screen == UiPage::Eyes) {
-			if (dbl) { eyes_faces_double(now, x, y); }
-			else { eyes_faces_tap(now, x, y); }
+			if (dbl) { eyes_faces_double(now, x, y);
+            hardware_fx::trigger(FxEvent::DoubleTap, now); }
+			else { eyes_faces_tap(now, x, y);
+            hardware_fx::trigger(FxEvent::Tap, now); }
 		} else {
 			UiPage target = screens_tap(current_screen, x, y, now);
 			if (target != current_screen) { switch_screen(target, now); }
@@ -332,6 +337,7 @@ void setup() {
 	bool power_ready = power_button_init();
 	boot_button.begin(millis());
 	Serial.begin(115200);
+    hardware_fx::init();
 	if (!settings_init()) { Serial.println("Settings storage unavailable; using RAM defaults"); }
 	if (!power_ready) { Serial.println("PWR button configuration unavailable"); }
 	init_screen();
@@ -441,6 +447,7 @@ void loop() {
 	sound_poll(now, ui_page_events(), current_screen == UiPage::Eyes && !screens_calling(),
 		view_timer().resting, view_timer().finished);
 	update_backlight(now);
+    hardware_fx::poll(now, screens_calling());
 	if ((uint32_t)(now - last_frame_ms) < FRAME_INTERVAL_MS) { return; }
 	last_frame_ms = now;
 	if (shutting_down) {
@@ -453,6 +460,7 @@ void loop() {
 		starting = false;
 		eyes_faces_greet(now);
 		sound_request(SoundCue::Startup, now);
+        hardware_fx::trigger(FxEvent::Startup, now);
 		switch_screen(UiPage::Eyes, now);
 	}
 #if MOCHI_RUNTIME_DIAGNOSTICS

@@ -54,7 +54,7 @@ jobs:
           arduino-cli core install "esp32:esp32@${ESP32_CORE_VERSION}" --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
       - name: Install pinned libraries
         run: |
-          arduino-cli lib install "ESP32Time@${ESP32TIME_VERSION}" "NimBLE-Arduino@${NIMBLE_VERSION}"
+          arduino-cli lib install "ESP32Time@${ESP32TIME_VERSION}" "NimBLE-Arduino@${NIMBLE_VERSION}" "Adafruit NeoPixel"
           arduino-cli lib install --no-deps "ChronosESP32@${CHRONOS_VERSION}" "GFX Library for Arduino@${GFX_VERSION}"
       - name: Restore compiled object cache
         if: github.event_name != 'release' && !startsWith(github.ref, 'refs/tags/')

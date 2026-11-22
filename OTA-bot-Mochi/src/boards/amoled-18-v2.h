@@ -62,3 +62,8 @@
 #define I2S_DI_IO    10  /**< ES8311 data in (microphone) */
 #define I2S_DO_IO    8   /**< ES8311 data out (speaker) */
 #define AUDIO_PA     46  /**< Speaker amplifier enable */
+
+/* External diffused side-bar WS2812B strip & coin vibration motor */
+#define MOCHI_LED_PIN    38
+#define MOCHI_LED_COUNT  6
+#define MOCHI_MOTOR_PIN  18
