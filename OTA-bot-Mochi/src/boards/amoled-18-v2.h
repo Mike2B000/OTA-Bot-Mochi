@@ -65,5 +65,5 @@
 
 /* External diffused side-bar WS2812B strip & coin vibration motor */
 #define MOCHI_LED_PIN    38
-#define MOCHI_LED_COUNT  6
+#define MOCHI_LED_COUNT  8
 #define MOCHI_MOTOR_PIN  18
