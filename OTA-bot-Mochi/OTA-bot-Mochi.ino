@@ -18,6 +18,7 @@
 #include <ChronosESP32.h>
 #include "pin_config.h"
 #include "src/hardware_fx.h"
+extern "C" void mochi_mouth_notify_sound(uint32_t nowMs, uint16_t durMs);
 #include "src/eyes/eyes_api.h"
 #include "src/eyes/eyes_faces.h"
 #include "src/eyes/imu_orientation.h"
@@ -91,6 +92,7 @@ constexpr uint32_t FRAME_INTERVAL_MS = 33;
 void notification_callback(Notification notification) {
 	ui_notification(notification);
     hardware_fx::trigger(FxEvent::Notification, millis());
+    mochi_mouth_notify_sound(millis(), 750);
 }
 
 /** @brief Update the call overlay. @param caller Caller ID. @param active Call state. */
@@ -310,9 +312,11 @@ void handle_touch(uint32_t now) {
 	} else if (tap && !screens_calling()) {
 		if (current_screen == UiPage::Eyes) {
 			if (dbl) { eyes_faces_double(now, x, y);
-            hardware_fx::trigger(FxEvent::DoubleTap, now); }
+            hardware_fx::trigger(FxEvent::DoubleTap, now);
+            mochi_mouth_notify_sound(now, 450); }
 			else { eyes_faces_tap(now, x, y);
-            hardware_fx::trigger(FxEvent::Tap, now); }
+            hardware_fx::trigger(FxEvent::Tap, now);
+            mochi_mouth_notify_sound(now, 300); }
 		} else {
 			UiPage target = screens_tap(current_screen, x, y, now);
 			if (target != current_screen) { switch_screen(target, now); }
@@ -461,6 +465,7 @@ void loop() {
 		eyes_faces_greet(now);
 		sound_request(SoundCue::Startup, now);
         hardware_fx::trigger(FxEvent::Startup, now);
+        mochi_mouth_notify_sound(now, 900);
 		switch_screen(UiPage::Eyes, now);
 	}
 #if MOCHI_RUNTIME_DIAGNOSTICS

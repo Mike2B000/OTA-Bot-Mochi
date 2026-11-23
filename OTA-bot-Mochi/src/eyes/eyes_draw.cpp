@@ -27,6 +27,99 @@ static void wipe(Arduino_GFX *gfx, const EyeConfig &cfg, EyeState &st) {
 }
 
 /** @brief Store the true min/max of both eyes, including asymmetric heights. @param st State. @param layout Eyes. */
+
+static uint32_t s_mouthTalkUntilMs = 0;
+extern "C" void mochi_mouth_notify_sound(uint32_t nowMs, uint16_t durMs) {
+    uint32_t until = nowMs + durMs;
+    if ((int32_t)(until - s_mouthTalkUntilMs) > 0) {
+        s_mouthTalkUntilMs = until;
+    }
+}
+
+static void paint_mochi_mouth(Arduino_GFX *gfx, const EyeConfig &cfg, const EyeLayout &layout, uint32_t nowMs) {
+    if (!gfx) return;
+    const EyeBox &a = layout.left;
+    const EyeBox &b = layout.right;
+    int16_t cx = ((a.x + a.w / 2) + (b.x + b.w / 2)) / 2;
+    int16_t bottomY = (a.y + a.h > b.y + b.h) ? (a.y + a.h) : (b.y + b.h);
+    int16_t eyeSpan = (b.x - (a.x + a.w));
+    int16_t halfW = eyeSpan > 16 ? (eyeSpan * 36) / 100 : 18;
+    if (halfW < 14) halfW = 14;
+    if (halfW > 28) halfW = 28;
+    int16_t baseY = bottomY - 2;
+    int16_t r = 4;
+    uint16_t col = cfg.fgColor;
+
+    bool talking = (s_mouthTalkUntilMs != 0 && (int32_t)(s_mouthTalkUntilMs - nowMs) > 0);
+    if (talking) {
+        uint8_t phase = (nowMs / 75) & 1;
+        int16_t ry = phase ? 9 : 4;
+        int16_t rx = halfW - 3;
+        gfx->fillRoundRect(cx - rx, baseY - 2, rx * 2, ry * 2, ry, col);
+        if (ry > 5) {
+            gfx->fillRoundRect(cx - rx + 4, baseY + 2, (rx - 4) * 2, (ry - 4) * 2, ry - 4, cfg.bgColor);
+        }
+        return;
+    }
+
+    switch (cfg.expression) {
+        case Expression::SURPRISED:
+        case Expression::AWE:
+        case Expression::EXCITED:
+        case Expression::SCARED:
+        case Expression::TERRIFIED: {
+            int16_t rad = 10;
+            gfx->fillCircle(cx, baseY + 6, rad, col);
+            gfx->fillCircle(cx, baseY + 6, rad - 4, cfg.bgColor);
+            break;
+        }
+        case Expression::SAD:
+        case Expression::WORRIED:
+        case Expression::ANGRY:
+        case Expression::FURIOUS:
+        case Expression::ANNOYED:
+        case Expression::FRUSTRATED: {
+            int16_t depth = 8;
+            for (int16_t dx = -halfW; dx <= halfW; dx += 2) {
+                int32_t norm = (int32_t)dx * dx * depth / (halfW * halfW);
+                int16_t py = baseY + (int16_t)norm;
+                gfx->fillCircle(cx + dx, py, r, col);
+            }
+            break;
+        }
+        case Expression::SLEEPY:
+        case Expression::TIRED:
+        case Expression::BORED: {
+            gfx->fillRoundRect(cx - (halfW / 2), baseY + 3, halfW, 6, 3, col);
+            break;
+        }
+        case Expression::DIZZY:
+        case Expression::CONFUSED:
+        case Expression::SKEPTIC: {
+            for (int16_t dx = -halfW; dx <= halfW; dx += 2) {
+                int16_t wave = ((dx / 6) & 1) ? -3 : 3;
+                gfx->fillCircle(cx + dx, baseY + 5 + wave, 3, col);
+            }
+            break;
+        }
+        default: {
+            // Exact Dasai Mochi thick round-capped curved U-smile
+            int16_t depth = (cfg.expression == Expression::HAPPY ||
+                             cfg.expression == Expression::GLEE ||
+                             cfg.expression == Expression::LOVE) ? 12 : 10;
+            int16_t w = (cfg.expression == Expression::HAPPY ||
+                         cfg.expression == Expression::GLEE ||
+                         cfg.expression == Expression::LOVE) ? (halfW + 3) : halfW;
+            for (int16_t dx = -w; dx <= w; dx += 2) {
+                int32_t curve = depth - ((int32_t)dx * dx * depth / (w * w));
+                int16_t py = baseY + (int16_t)curve;
+                gfx->fillCircle(cx + dx, py, r, col);
+            }
+            break;
+        }
+    }
+}
+
 static void store_union(EyeState &st, const EyeLayout &layout, const EyeConfig &cfg) {
 	const EyeBox &a = layout.left, &b = layout.right;
 	int16_t left = (a.x < b.x ? a.x : b.x) - 2;
@@ -36,7 +129,7 @@ static void store_union(EyeState &st, const EyeLayout &layout, const EyeConfig &
 	st.prevX = eye_limit(left, 0, cfg.screenW - 1);
 	st.prevY = eye_limit(top, 0, cfg.screenH - 1);
 	st.prevW = eye_limit(right, st.prevX + 1, cfg.screenW) - st.prevX;
-	st.prevH = eye_limit(bottom, st.prevY + 1, cfg.screenH) - st.prevY;
+	st.prevH = eye_limit(int16_t(bottom + 24), st.prevY + 1, cfg.screenH) - st.prevY;
 }
 
 /** @brief Expand the stored union with the petting heart box. @param st State. */
@@ -186,7 +279,8 @@ void eyes_draw() {
 		paint_heart(gfx, eye_rgb(255, 112, 157), st.heartX, st.heartY);
 	}
 	paint_fly(gfx, cfg, pose.play);
-	store_union(st, eye_effect_bounds(cfg, layout), cfg);
+	paint_mochi_mouth(gfx, cfg, layout, millis());
+    store_union(st, eye_effect_bounds(cfg, layout), cfg);
 	// Particles and reversible morphs travel beyond the ordinary pair's rectangle.
 	if (backdropLeaving || pose.play.fly || eye_performance(cfg.expression)) {
 		st.prevX = st.prevY = 0; st.prevW = cfg.screenW; st.prevH = cfg.screenH;
