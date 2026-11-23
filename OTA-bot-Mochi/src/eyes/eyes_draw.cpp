@@ -279,7 +279,7 @@ void eyes_draw() {
 		paint_heart(gfx, eye_rgb(255, 112, 157), st.heartX, st.heartY);
 	}
 	paint_fly(gfx, cfg, pose.play);
-	paint_mochi_mouth(gfx, cfg, layout, millis());
+	paint_mochi_mouth(gfx, cfg, layout, elapsed);
     store_union(st, eye_effect_bounds(cfg, layout), cfg);
 	// Particles and reversible morphs travel beyond the ordinary pair's rectangle.
 	if (backdropLeaving || pose.play.fly || eye_performance(cfg.expression)) {
