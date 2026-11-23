@@ -28,7 +28,7 @@ static void wipe(Arduino_GFX *gfx, const EyeConfig &cfg, EyeState &st) {
 
 /** @brief Store the true min/max of both eyes, including asymmetric heights. @param st State. @param layout Eyes. */
 
-#ifdef ARDUINO
+#ifdef ESP32
 static uint32_t s_mouthTalkUntilMs = 0;
 extern "C" void mochi_mouth_notify_sound(uint32_t nowMs, uint16_t durMs) {
     uint32_t until = nowMs + durMs;
@@ -281,7 +281,7 @@ void eyes_draw() {
 		paint_heart(gfx, eye_rgb(255, 112, 157), st.heartX, st.heartY);
 	}
 	paint_fly(gfx, cfg, pose.play);
-	#ifdef ARDUINO
+	#ifdef ESP32
     paint_mochi_mouth(gfx, cfg, layout, elapsed);
 #endif
     store_union(st, eye_effect_bounds(cfg, layout), cfg);
