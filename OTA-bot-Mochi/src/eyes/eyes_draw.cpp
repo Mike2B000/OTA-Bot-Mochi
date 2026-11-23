@@ -40,7 +40,7 @@ static void paint_mochi_mouth(Arduino_GFX *gfx, const EyeConfig &cfg, const EyeL
     if (!gfx) return;
     const EyeBox &a = layout.left;
     const EyeBox &b = layout.right;
-    int16_t cx = ((a.x + a.w / 2) + (b.x + b.w / 2)) / 2;
+    int16_t cx = (a.x + b.x + b.w) / 2;
     int16_t bottomY = (a.y + a.h > b.y + b.h) ? (a.y + a.h) : (b.y + b.h);
     int16_t eyeSpan = (b.x - (a.x + a.w));
     int16_t halfW = eyeSpan > 16 ? (eyeSpan * 36) / 100 : 18;
@@ -69,8 +69,8 @@ static void paint_mochi_mouth(Arduino_GFX *gfx, const EyeConfig &cfg, const EyeL
         case Expression::SCARED:
         case Expression::TERRIFIED: {
             int16_t rad = 10;
-            gfx->fillCircle(cx, baseY + 6, rad, col);
-            gfx->fillCircle(cx, baseY + 6, rad - 4, cfg.bgColor);
+            gfx->fillCircle(cx, baseY + 6, rad, col); gfx->fillCircle(cx - 1, baseY + 6, rad, col);
+            gfx->fillCircle(cx, baseY + 6, rad - 4, cfg.bgColor); gfx->fillCircle(cx - 1, baseY + 6, rad - 4, cfg.bgColor);
             break;
         }
         case Expression::SAD:
@@ -83,7 +83,7 @@ static void paint_mochi_mouth(Arduino_GFX *gfx, const EyeConfig &cfg, const EyeL
             for (int16_t dx = -halfW; dx <= halfW; dx += 2) {
                 int32_t norm = (int32_t)dx * dx * depth / (halfW * halfW);
                 int16_t py = baseY + (int16_t)norm;
-                gfx->fillCircle(cx + dx, py, r, col);
+                gfx->fillCircle(cx + dx, py, r, col); gfx->fillCircle(cx - 1 - dx, py, r, col);
             }
             break;
         }
@@ -97,7 +97,7 @@ static void paint_mochi_mouth(Arduino_GFX *gfx, const EyeConfig &cfg, const EyeL
         case Expression::SKEPTIC: {
             for (int16_t dx = -halfW; dx <= halfW; dx += 2) {
                 int16_t wave = ((dx / 6) & 1) ? -3 : 3;
-                gfx->fillCircle(cx + dx, baseY + 5 + wave, 3, col);
+                gfx->fillCircle(cx + dx, baseY + 5 + wave, 3, col); gfx->fillCircle(cx - 1 - dx, baseY + 5 + wave, 3, col);
             }
             break;
         }
@@ -112,7 +112,7 @@ static void paint_mochi_mouth(Arduino_GFX *gfx, const EyeConfig &cfg, const EyeL
             for (int16_t dx = -w; dx <= w; dx += 2) {
                 int32_t curve = depth - ((int32_t)dx * dx * depth / (w * w));
                 int16_t py = baseY + (int16_t)curve;
-                gfx->fillCircle(cx + dx, py, r, col);
+                gfx->fillCircle(cx + dx, py, r, col); gfx->fillCircle(cx - 1 - dx, py, r, col);
             }
             break;
         }
