@@ -131,7 +131,11 @@ static void store_union(EyeState &st, const EyeLayout &layout, const EyeConfig &
 	st.prevX = eye_limit(left, 0, cfg.screenW - 1);
 	st.prevY = eye_limit(top, 0, cfg.screenH - 1);
 	st.prevW = eye_limit(right, st.prevX + 1, cfg.screenW) - st.prevX;
-	st.prevH = eye_limit(int16_t(bottom + 24), st.prevY + 1, cfg.screenH) - st.prevY;
+	#ifdef ESP32
+    st.prevH = eye_limit(int16_t(bottom + 24), st.prevY + 1, cfg.screenH) - st.prevY;
+#else
+    st.prevH = eye_limit(bottom, st.prevY + 1, cfg.screenH) - st.prevY;
+#endif
 }
 
 /** @brief Expand the stored union with the petting heart box. @param st State. */
