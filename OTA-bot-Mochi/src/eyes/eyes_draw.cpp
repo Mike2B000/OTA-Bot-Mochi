@@ -88,7 +88,7 @@ static void paint_mochi_mouth(Arduino_GFX *gfx, const EyeConfig &cfg, const EyeL
             break;
         }
         case Expression::SLEEPY:
-        case Expression::TIRED:
+        case Expression::TIRED: {
             gfx->fillRoundRect(cx - (halfW / 2), baseY + 3, halfW, 6, 3, col);
             break;
         }
