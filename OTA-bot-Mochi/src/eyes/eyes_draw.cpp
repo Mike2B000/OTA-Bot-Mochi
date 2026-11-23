@@ -28,6 +28,7 @@ static void wipe(Arduino_GFX *gfx, const EyeConfig &cfg, EyeState &st) {
 
 /** @brief Store the true min/max of both eyes, including asymmetric heights. @param st State. @param layout Eyes. */
 
+#ifdef ARDUINO
 static uint32_t s_mouthTalkUntilMs = 0;
 extern "C" void mochi_mouth_notify_sound(uint32_t nowMs, uint16_t durMs) {
     uint32_t until = nowMs + durMs;
@@ -118,6 +119,8 @@ static void paint_mochi_mouth(Arduino_GFX *gfx, const EyeConfig &cfg, const EyeL
         }
     }
 }
+
+#endif
 
 static void store_union(EyeState &st, const EyeLayout &layout, const EyeConfig &cfg) {
 	const EyeBox &a = layout.left, &b = layout.right;
@@ -278,7 +281,9 @@ void eyes_draw() {
 		paint_heart(gfx, eye_rgb(255, 112, 157), st.heartX, st.heartY);
 	}
 	paint_fly(gfx, cfg, pose.play);
-	paint_mochi_mouth(gfx, cfg, layout, elapsed);
+	#ifdef ARDUINO
+    paint_mochi_mouth(gfx, cfg, layout, elapsed);
+#endif
     store_union(st, eye_effect_bounds(cfg, layout), cfg);
 	// Particles and reversible morphs travel beyond the ordinary pair's rectangle.
 	if (backdropLeaving || pose.play.fly || eye_performance(cfg.expression)) {
